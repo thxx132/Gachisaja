@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  username        String   @unique
+  password        String
+  email           String   @unique
+  trustScore      Int      @default(0) // 누적된 신뢰도 점수
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  nickname        String
+  profileImageUrl String?
+
+  posts         Post[] // User이 작성한 게시글
+  comments      Comment[] // User이 작성한 댓글
+  participation Participation[] // User이 참여한 거래
+}
+
+model Post {
+  id           Int      @id @default(autoincrement())
+  authorId     Int
+  title        String
+  content      String
+  type         String
+  unitQuantity Int
+  imageUrl     String?
+  deadline     DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  author               User                  @relation(fields: [authorId], references: [id], onDelete: Cascade) // 작성자(User)
+  comments             Comment[] // 게시글의 댓글들
+  participations       Participation[] // 거래에 참여한 사용자들
+  participationCounter ParticipationCounter? // 거래 참여 수량 정보
+}
+
+model Comment {
+  id              Int    @id @default(autoincrement())
+  postId          Int
+  commentAuthorId Int
+  content         String
+  class           Int // 댓글의 깊이 (0: 원댓글, 1 이상: 대댓글)
+  order           Int // 댓글의 순서
+  groupNum        Int // 댓글 그룹 번호
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [commentAuthorId], references: [id], onDelete: Cascade) // 댓글 작성자(User)
+}
+
+model Participation {
+  id                Int      @id @default(autoincrement())
+  postId            Int
+  userId            Int
+  quantity          Int
+  participationDate DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade) // 거래 참여자(User)
+
+  @@unique([postId, userId]) // 복합 고유 인덱스 추가
+}
+
+model ParticipationCounter {
+  postId        Int @id
+  count         Int @default(0)
+  totalQuantity Int @default(0)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model TrustScore {
+  id         Int @id @default(autoincrement())
+  fromUserId Int // 점수를 주는 User ID
+  toUserId   Int // 점수를 받는 User ID
+  score      Int // +5에서 -5까지 점수
+}
