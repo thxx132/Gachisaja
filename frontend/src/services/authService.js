@@ -64,7 +64,18 @@ export async function getCurrentUser() {
         throw new Error('Failed to fetch user info');
     }
 
-    return response.json();
+    const userData = await response.json();
+
+    const response2 = await fetch(`${BASE_URL}/users/${userData['userId']}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
+
+    const DetaileduserData = await response2.json();
+
+    return DetaileduserData;
 }
 
 /**

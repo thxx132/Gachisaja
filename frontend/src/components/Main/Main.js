@@ -28,7 +28,7 @@ const Main = () => {
                 const userData = await getCurrentUser();
                 setUser(userData);
                 // 로그인된 사용자 정보를 기반으로 참여 글 가져오기
-                const myPostsData = await fetchMyPosts(userData.userId);
+                const myPostsData = await fetchMyPosts(userData.id);
                 setMyPosts(myPostsData);
             } catch {
                 // 토큰이 없거나 유효하지 않은 경우
@@ -54,7 +54,7 @@ const Main = () => {
     if (loading) {
         return <p>Loading...</p>;
     }
-    console.log('abc:', user);
+
     return (
         <div>
             <Navbar user={user} />
