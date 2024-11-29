@@ -1,17 +1,9 @@
 const BASE_URL = 'http://localhost:3000'; // 백엔드 API 기본 URL
 
-/**
- * 회원가입 API 호출 함수
- * @param {Object} userInfo - { username, email, password }
- */
 export async function register(userInfo) {
-    // 수정된 부분: 객체 데이터(JSON)로 전달받음
     const response = await fetch(`${BASE_URL}/users`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userInfo), // 수정된 부분: JSON 데이터로 변환
+        body: userInfo
     });
 
     // 에러 처리 추가 (수정된 부분)

@@ -21,7 +21,7 @@ export class UserService {
   ) {}
 
   // 새로운 사용자를 생성하며, 비밀번호를 bcrypt로 암호화하여 저장
-  async createUser(createUserDto: CreateUserDto) {
+  async createUser(createUserDto: CreateUserDto, imageUrl: string | null) {
     // 이메일과 닉네임 중복 확인
     const existingUser = await this.prisma.user.findFirst({
       where: {
@@ -36,9 +36,8 @@ export class UserService {
       throw new ConflictException('The email or nickname is already in use.');
     }
 
-    const profileImageUrl =
-      createUserDto.profileImageUrl ||
-      this.configService.get<string>('DEFAULT_PROFILE_IMAGE_URL');
+    const defaultprofileImageUrl = this.configService.get('DEFAULT_PROFILE_IMAGE_URL');
+    const profileImageUrl = imageUrl || defaultprofileImageUrl;
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     return this.prisma.user.create({

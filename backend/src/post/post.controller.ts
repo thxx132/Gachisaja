@@ -80,7 +80,7 @@ export class PostController {
     if (file) {
       imageUrl = await this.awsService.uploadFile(
         file.buffer, // 파일 데이터
-        'posts', // S3 폴더 이름
+        'post', // S3 폴더 이름
         file.mimetype, // 파일 MIME 타입
       );
     }

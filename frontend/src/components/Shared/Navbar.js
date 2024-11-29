@@ -7,6 +7,8 @@ import { logout } from "../../services/authService";
 const Navbar = ({ user }) => {
     const navigate = useNavigate();
 
+    const defaultprofile = "https://backendnewbie.s3.us-east-2.amazonaws.com/default/defaultimage.png"
+
     const handleLogout = () => {
         logout(); // 로컬 스토리지에서 토큰 제거
         navigate("/login");
@@ -27,7 +29,7 @@ const Navbar = ({ user }) => {
                     <>
                         <div style={styles.profile} onClick={handleProfileClick}>
                             <img
-                                src={user.profileImageUrl || "/default-profile.png"} // 프로필 이미지 (기본값 설정)
+                                src={user.profileImageUrl || defaultprofile} // 프로필 이미지 (기본값 설정)
                                 alt="Profile"
                                 style={styles.profileImage}
                             />

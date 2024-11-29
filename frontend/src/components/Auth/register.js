@@ -7,6 +7,7 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [nickname, setNickname] = useState('');
     const [email, setEmail] = useState('');
+    const [profileImage, setProfileImage] = useState(null); // 프로필 이미지 상태 추가
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
@@ -14,18 +15,31 @@ const Register = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
 
-        // 필드 값 검증 추가 (수정된 부분)
+        // 필드 값 검증
         if (!username || !email || !password || !nickname) {
-            setError('All fields are required!'); // 필드 누락 시 에러 메시지 설정
+            setError('All fields are required!');
             return;
         }
 
         try {
-            // 수정된 부분: register 호출 시 객체로 데이터 전달
-            await register({ username, email, password, nickname });
+            // FormData를 사용하여 데이터를 전송
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            formData.append('nickname', nickname);
+            formData.append('email', email);
+
+            if (profileImage) {
+                formData.append('profileImage', profileImage); // 이미지 파일 추가
+            }
+
+            // for (let [key, value] of formData.entries()) {
+            //     console.log(`${key}:`, value);
+            // }
+
+            await register(formData); // API 호출
             navigate('/login'); // 회원가입 성공 시 로그인 페이지로 이동
         } catch (err) {
-            // 수정된 부분: 서버로부터 에러 메시지 처리
             setError(err.response?.data?.message || 'Failed to register, please try again.');
         }
     };
@@ -58,10 +72,14 @@ const Register = () => {
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                 />
+                {/* 프로필 이미지 업로드 필드 추가 */}
+                <input
+                    type="file"
+                    onChange={(e) => setProfileImage(e.target.files[0])}
+                />
                 <button type="submit">Register</button>
             </form>
-            {/* 수정된 부분: 에러 메시지 UI 개선 */}
-            {error && <p style={{color: 'red'}}>{error}</p>}
+            {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
     );
 };

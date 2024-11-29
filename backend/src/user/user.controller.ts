@@ -19,15 +19,32 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AwsService } from '../aws/aws.service';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly awsService: AwsService,
+  ) {}
 
   // 새로운 사용자 생성
   @Post()
-  async createUser(@Body() createUserDto: CreateUserDto) {
-    return this.userService.createUser(createUserDto);
+  @UseInterceptors(FileInterceptor('profileImage'))
+  async createUser(
+    @Body() createUserDto: CreateUserDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    let imageUrl = null;
+    if (file) {
+      imageUrl = await this.awsService.uploadFile(
+        file.buffer, // 파일 데이터
+        'profile', // S3 폴더 이름
+        file.mimetype, // 파일 MIME 타입
+      );
+    }
+
+    return this.userService.createUser(createUserDto, imageUrl);
   }
 
   // 모든 사용자 조회
