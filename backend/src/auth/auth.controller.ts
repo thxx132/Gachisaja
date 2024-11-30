@@ -12,13 +12,14 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('relogin')
-  async relogin(@Request() req) {
-    const userId = req.user.userId;
-    return this.authService.relogin(userId);
-  }
+  //원래 jwttoken으로 정보 불러와서 그대로 다시 로그인하게 하려했지만,
+  //bcrypt가 복호화가 안되어서 다른 방법을 사용해야할듯. 근데 너무 늦게 발견함
+  // @UseGuards(JwtAuthGuard)
+  // @Post('relogin')
+  // async relogin(@Request() req) {
+  //   const userId = req.user.userId;
+  //   return this.authService.relogin(userId);
+  // }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')

@@ -1,0 +1,73 @@
+/* 스타일링 전체 컨테이너 */
+.post-upload-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+}
+
+/* 제목 */
+.post-upload-container h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* 에러 및 성공 메시지 */
+.message {
+    text-align: center;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.message.error {
+    color: red;
+}
+
+.message.success {
+    color: green;
+}
+
+/* 입력 필드 */
+.post-upload-container input[type="text"],
+.post-upload-container input[type="number"],
+.post-upload-container input[type="datetime-local"],
+.post-upload-container textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* 텍스트 영역 */
+.post-upload-container textarea {
+    resize: none;
+    height: 100px;
+}
+
+/* 파일 선택 */
+.post-upload-container input[type="file"] {
+    margin-bottom: 15px;
+}
+
+/* 버튼 스타일 */
+.post-upload-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.post-upload-container button:hover {
+    background-color: #0056b3;
+}

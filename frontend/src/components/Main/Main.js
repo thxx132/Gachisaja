@@ -47,7 +47,7 @@ const Main = () => {
     }, [navigate]);
 
     const handlePostClick = (postId) => {
-        navigate(`/post/${postId}`); // 특정 Post 페이지로 이동
+        navigate(`/posts/${postId}`); // 특정 Post 페이지로 이동
     };
 
     // 로딩 상태일 때 로딩 메시지 표시
@@ -60,12 +60,12 @@ const Main = () => {
             <Navbar user={user} />
             <div style={{ display: "flex", justifyContent: "space-between", margin: "20px" }}>
                 {/* 최신 글 박스 */}
-                <div style={{ width: "45%", border: "1px solid #ccc", padding: "10px" }}>
+                <div style={{width: "45%", border: "1px solid #ccc", padding: "10px"}}>
                     <h2>Recent Posts</h2>
                     {recentPosts.length === 0 ? (
                         <p>No recent posts available</p> // 데이터가 없는 경우 메시지 표시
                     ) : (
-                        <ul style={{ listStyleType: "none", padding: 0 }}>
+                        <ul style={{listStyleType: "none", padding: 0}}>
                             {recentPosts.map((post) => (
                                 <li
                                     key={post.id}
@@ -93,8 +93,8 @@ const Main = () => {
                                     />
                                     <div>
                                         {/* 제목과 추가 정보 */}
-                                        <h3 style={{ margin: 0 }}>{post.title}</h3>
-                                        <p style={{ margin: "5px 0" }}>
+                                        <h3 style={{margin: 0}}>{post.title}</h3>
+                                        <p style={{margin: "5px 0"}}>
                                             {post.author.nickname} - {formatDate(post.deadline)}
                                         </p>
                                     </div>
@@ -115,15 +115,28 @@ const Main = () => {
                     >
                         View All Posts
                     </button>
+                    <button
+                        style={{
+                            backgroundColor: "#000bff",
+                            color: "#fff",
+                            border: "none",
+                            padding: "10px 15px",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                        }}
+                        onClick={() => navigate("/posts/create")}
+                    >
+                        Create Posts
+                    </button>
                 </div>
 
                 {/* 내가 참여한 글 박스 */}
-                <div style={{ width: "45%", border: "1px solid #ccc", padding: "10px" }}>
+                <div style={{width: "45%", border: "1px solid #ccc", padding: "10px"}}>
                     <h2>My Participations</h2>
                     {myPosts.length === 0 ? (
                         <p>You have not participated in any posts.</p>
                     ) : (
-                        <ul style={{ listStyleType: "none", padding: 0 }}>
+                        <ul style={{listStyleType: "none", padding: 0}}>
                             {myPosts.map((participation) => (
                                 <li
                                     key={participation.id}

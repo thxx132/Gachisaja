@@ -28,18 +28,18 @@ export class AuthService {
     throw new UnauthorizedException('Invalid credentials');
   }
 
-  async relogin(userId: number) {
-    // 사용자 검증: 데이터베이스에서 사용자가 존재하는지 확인
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    // 새로운 토큰 생성
-    const payload = { username: user.username, sub: user.id };
-    return { access_token: this.jwtService.sign(payload) };
-  }
+  // async relogin(userId: number) {
+  //   // 사용자 검증: 데이터베이스에서 사용자가 존재하는지 확인
+  //   const user = await this.prisma.user.findUnique({
+  //     where: { id: userId },
+  //   });
+  //
+  //   if (!user) {
+  //     throw new UnauthorizedException('User not found');
+  //   }
+  //
+  //   // 새로운 토큰 생성
+  //   const payload = { username: user.username, sub: user.id };
+  //   return { access_token: this.jwtService.sign(payload) };
+  // }
 }

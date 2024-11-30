@@ -1,7 +1,7 @@
 // src/comment/dto/create-comment.dto.ts
 
 import { IsInt, IsNotEmpty, IsString } from 'class-validator';
-import {Type} from "class-transformer";
+import { Type } from "class-transformer";
 
 export class CreateCommentDto {
   @IsInt()

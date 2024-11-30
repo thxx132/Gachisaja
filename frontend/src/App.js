@@ -6,6 +6,7 @@ import Main from './components/Main/Main';
 import PostList from './components/Post/Postlist';
 import PostDetail from './components/Post/Postdetail';
 import UserProfile from './components/User/UserProfile';
+import Postupload from "./components/Post/Postupload";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/posts" element={<PostList />} />
           <Route path="/posts/:id" element={<PostDetail />} />
           <Route path="/user/profile" element={<UserProfile />} />
+          <Route path="/posts/create" element={<Postupload />} />
         </Routes>
       </Router>
   );
