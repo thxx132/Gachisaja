@@ -15,7 +15,7 @@ const Navbar = ({ user }) => {
     };
 
     const handleProfileClick = () => {
-        navigate("/user"); // 유저 페이지로 이동
+        navigate("/user/profile"); // 유저 페이지로 이동
     };
 
     return (

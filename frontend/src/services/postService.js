@@ -7,7 +7,7 @@ const BASE_URL = 'http://localhost:3000'; // API 기본 URL
  */
 export async function fetchRecentPosts() {
     try {
-        const response = await fetch(`http://localhost:3000/posts/recent/5`, {
+        const response = await fetch(`${BASE_URL}/posts/recent/5`, {
             method: "GET",
         });
 
