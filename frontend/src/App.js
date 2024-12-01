@@ -7,6 +7,7 @@ import PostList from './components/Post/Postlist';
 import PostDetail from './components/Post/Postdetail';
 import UserProfile from './components/User/UserProfile';
 import Postupload from "./components/Post/Postupload";
+import TrustScore from "./components/trustscore/TrustScore";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/posts/:id" element={<PostDetail />} />
           <Route path="/user/profile" element={<UserProfile />} />
           <Route path="/posts/create" element={<Postupload />} />
+          <Route path="/trustscore/:postId" element={<TrustScore />} />
         </Routes>
       </Router>
   );

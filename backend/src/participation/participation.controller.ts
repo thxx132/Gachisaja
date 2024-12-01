@@ -7,6 +7,8 @@ import {
   Body,
   UseGuards,
   Request,
+  Query,
+  Get,
 } from '@nestjs/common';
 import { ParticipationService } from './participation.service';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
@@ -42,5 +44,16 @@ export class ParticipationController {
       cancelParticipationDto,
       userProfileId,
     );
+  }
+
+  @Get('check')
+  async checkParticipation(@Query('postId') postId: number, @Request() req) {
+    const userId = req.user.userId;
+    return this.participationService.checkParticipation(postId, userId);
+  }
+
+  @Get('participants')
+  async getParticipants(@Query('postId') postId: number) {
+    return this.participationService.getParticipants(postId);
   }
 }

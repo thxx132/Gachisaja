@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import Navbar from "../Shared/Navbar";
 
 const defaultprofile = "https://backendnewbie.s3.us-east-2.amazonaws.com/default/defaultimage.png";
@@ -15,10 +15,42 @@ const PostDetail = () => {
     const [user, setUser] = useState(null); // 로그인된 유저 정보
     const [quantity, setQuantity] = useState(1); // 기본값 1
     const [loading, setLoading] = useState(true); // 로딩 상태 추가
-
-
+    const [userParticipation, setUserParticipation] = useState(false);
+    const navigate = useNavigate();
+    const [editMode, setEditMode] = useState(false); // 수정 모드 (추가된 상태)
+    const [editContent, setEditContent] = useState(''); // 수정된 글 내용 (추가된 상태)
+    // console.log(id);
     // 게시물 데이터 및 댓글 가져오기
     useEffect(() => {
+
+        const fetchPostAndParticipation = async () => {
+            try {
+                const token = localStorage.getItem('token');
+
+                // 게시글 데이터 가져오기
+                const postResponse = await fetch(`${BASE_URL}/posts/id/${id}`);
+                if (!postResponse.ok) throw new Error('Failed to fetch post data');
+                const postData = await postResponse.json();
+                setPost(postData);
+
+                // 사용자 참여 여부 확인
+                const participationResponse = await fetch(
+                    `${BASE_URL}/participation/check?postId=${id}`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
+
+                if (participationResponse.ok) {
+                    const isParticipating = await participationResponse.json();
+                    setUserParticipation(isParticipating);
+                }
+            } catch (error) {
+                console.error('Error fetching post or participation:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
         const fetchPostAuthorNickname = async (authorId) => {
             try {
@@ -35,14 +67,30 @@ const PostDetail = () => {
         const fetchPostcount = async (postId) => {
             try {
                 const response = await fetch(`${BASE_URL}/participation-counter/${postId}`);
-                if (!response.ok) throw new Error('Failed to fetch post author data');
-                const postData = await response.json();
-                return postData.count; // count반환
+
+                // 응답 상태 확인
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch post count, Status: ${response.status}`);
+                }
+
+                // 응답 본문 확인
+                const text = await response.text();
+
+                // 응답이 비어 있거나 빈 객체인 경우 count를 0으로 반환
+                if (!text || text.trim() === "") {
+                    console.warn(`Empty response for postId ${postId}, setting count to 0`);
+                    return 0;
+                }
+
+                // JSON 파싱 및 count 값 반환
+                const postData = JSON.parse(text);
+                return postData.count || 0; // count 값이 없으면 기본값 0
             } catch (error) {
-                console.error(`Error fetching author data for postId ${postId}:`, error);
-                return null; // 에러 발생 시 기본값 반환
+                console.error(`Error fetching post count for postId ${postId}:`, error);
+                return 0; // 에러 발생 시 기본값 0 반환
             }
         };
+
 
         const fetchPostUnitquantity = async (postId) => {
             try {
@@ -125,6 +173,7 @@ const PostDetail = () => {
                 const response = await fetch(`${BASE_URL}/posts/id/${id}`);
                 if (!response.ok) throw new Error('Failed to fetch post data');
                 const postData = await response.json();
+                // console.log(postData);
                 setPost(postData);
             } catch (error) {
                 console.error('Error fetching post:', error);
@@ -144,8 +193,16 @@ const PostDetail = () => {
         };
 
         const fetchUserData = async () => {
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                // 토큰이 없으면 유저 정보를 null로 설정하고 종료
+                setUser(null);
+                setLoading(false);
+                return;
+            }
+
             try {
-                const token = localStorage.getItem('token');
                 const response = await fetch(`${BASE_URL}/auth/me`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -155,14 +212,16 @@ const PostDetail = () => {
                 if (!response.ok) throw new Error('Failed to fetch user data');
 
                 const userData = await response.json();
-                setUser(userData); // userData에 userId가 포함되어 있어야 함
+                setUser({ ...userData, profileImageUrl: await fetchUserProfile(userData.userId) }); // userData에 userId가 포함되어 있어야 함
             } catch (error) {
                 console.error('Error fetching user data:', error);
-                setUser(null);
+                setUser(null); // 에러 발생 시 유저 정보 초기화
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
+        fetchPostAndParticipation()
         fetchPost();
         fetchComments();
         fetchUserData();
@@ -170,13 +229,81 @@ const PostDetail = () => {
         fetchPostAndAuthor();
     }, [id]);
 
+    const handleEditPost = async () => {
+        try {
+            const token = localStorage.getItem('token'); // 토큰 가져오기
+
+            // API 요청 보내기
+            const response = await fetch(`${BASE_URL}/posts/${id}`, {
+                method: 'PATCH', // PATCH 메서드 사용
+                headers: {
+                    'Content-Type': 'application/json', // JSON 형식
+                    Authorization: `Bearer ${token}`, // 토큰 헤더
+                },
+                body: JSON.stringify({ content: editContent }), // 수정된 내용 전달
+            });
+
+            if (!response.ok) throw new Error('Failed to edit post'); // 오류 처리
+
+            const updatedPost = await response.json(); // 수정된 게시글 정보 받기
+            setPost(updatedPost); // 상태 업데이트
+            setEditMode(false); // 수정 모드 종료
+            alert('글이 수정되었습니다.'); // 성공 메시지
+        } catch (error) {
+            console.error('Error editing post:', error);
+            alert('글 수정에 실패했습니다.'); // 오류 메시지
+        }
+    };
+
+// 게시글 삭제 함수
+    const handleDeletePost = async () => {
+        try {
+            const token = localStorage.getItem('token'); // 토큰 가져오기
+
+            // API 요청 보내기
+            const response = await fetch(`${BASE_URL}/posts/${id}`, {
+                method: 'DELETE', // DELETE 메서드 사용
+                headers: {
+                    Authorization: `Bearer ${token}`, // 토큰 헤더
+                },
+            });
+
+            if (!response.ok) throw new Error('Failed to delete post'); // 오류 처리
+
+            alert('글이 삭제되었습니다.'); // 성공 메시지
+            navigate('/'); // 메인 페이지로 이동
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            alert('글 삭제에 실패했습니다.'); // 오류 메시지
+        }
+    };
+
+    const handleDeadlineCheck = () => {
+
+        if (loading) return;
+
+        if (post && new Date(post.deadline) < new Date()) {
+            if (userParticipation) {
+                navigate(`/trustscore/${id}`); // trustscore 페이지로 이동
+            } else {
+                navigate('/'); // 메인 페이지로 이동
+            }
+        }
+    };
+
     const participateInPost = async (postId, quantity) => {
         try {
             const token = localStorage.getItem('token');
 
+            console.log('Participate Payload:', {
+                postId: postId,
+                quantity: quantity,
+            });
+
             const response = await fetch(`${BASE_URL}/participation`, {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
@@ -196,21 +323,34 @@ const PostDetail = () => {
     const cancelParticipationInPost = async (postId) => {
         try {
             const token = localStorage.getItem('token');
+
+            // 참여 취소 API 호출
             const response = await fetch(`${BASE_URL}/participation`, {
                 method: 'DELETE',
                 headers: {
+                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(postId),
+                body: JSON.stringify({ postId }), // body에 postId 전달
             });
 
-            if (!response.ok) throw new Error('Failed to cancel participation');
-            return true;
+            if (!response.ok) {
+                throw new Error(`Failed to cancel participation: ${response.statusText}`);
+            }
+
+            alert('참여가 취소되었습니다.');
+            window.location.reload(); // 페이지를 새로고침하여 상태 반영
+
+            return true; // 성공 시 true 반환
         } catch (error) {
             console.error('Error canceling participation:', error);
-            return false;
+            alert('참여 취소에 실패했습니다.');
+            return false; // 실패 시 false 반환
         }
     };
+
+
+
 
 
     // 댓글 트리 생성 및 평탄화
@@ -369,12 +509,17 @@ const PostDetail = () => {
     const handleCommentSubmit = async (e) => {
         e.preventDefault();
 
+        if (!user) {
+            alert('You need to log in to submit a comment.');
+            return;
+        }
+
         const payload = {
             content: newComment,
             postId: post.id,
         };
 
-        console.log(payload);
+        // console.log(payload);
 
         try {
             const token = localStorage.getItem('token');
@@ -429,6 +574,10 @@ const PostDetail = () => {
         }
     };
 
+    useEffect(() => {
+        handleDeadlineCheck();
+    }, [post, userParticipation]);
+
     if (loading) {
         return <p>Loading...</p>;
     }
@@ -461,7 +610,7 @@ const PostDetail = () => {
                     />
                 </div>
 
-                {comment.commentAuthorId === user.userId && ( // 현재 유저와 작성자 ID 비교
+                {comment.commentAuthorId === user?.userId && ( // 현재 유저와 작성자 ID 비교
                     <div>
                         <button
                             onClick={() => handleEditComment(comment.id, prompt('Edit your comment:', comment.content))}
@@ -568,6 +717,80 @@ const PostDetail = () => {
                             {/* 참여자 수 */}
                             <p style={{fontWeight: 'bold'}}>참여자 수: {post.count}</p>
 
+                            {/* === 수정 모드 구현 === */}
+                            {!editMode ? (
+                                <p>{post.content}</p>
+                            ) : (
+                                <textarea
+                                    value={editContent}
+                                    onChange={(e) => setEditContent(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        height: '150px',
+                                        marginBottom: '10px',
+                                        padding: '10px',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '5px',
+                                    }}
+                                />
+                            )}
+                            {/* === 수정 모드 끝 === */}
+
+                            {/* === 작성자만 버튼 표시 === */}
+                            {user && user.userId === post.authorId && (
+                                <div style={{ marginTop: '20px' }}>
+                                    {!editMode ? (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    setEditMode(true); // 수정 모드 활성화
+                                                    setEditContent(post.content); // 기존 글 내용을 수정 입력란에 세팅
+                                                }}
+                                                style={{
+                                                    backgroundColor: '#007bff',
+                                                    color: '#fff',
+                                                    padding: '10px 15px',
+                                                    border: 'none',
+                                                    borderRadius: '5px',
+                                                    cursor: 'pointer',
+                                                    marginRight: '10px',
+                                                }}
+                                            >
+                                                글 수정
+                                            </button>
+                                            <button
+                                                onClick={handleDeletePost}
+                                                style={{
+                                                    backgroundColor: '#dc3545',
+                                                    color: '#fff',
+                                                    padding: '10px 15px',
+                                                    border: 'none',
+                                                    borderRadius: '5px',
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                글 삭제
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button
+                                            onClick={handleEditPost}
+                                            style={{
+                                                backgroundColor: '#28a745',
+                                                color: '#fff',
+                                                padding: '10px 15px',
+                                                border: 'none',
+                                                borderRadius: '5px',
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            수정 완료
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                            {/* === 작성자만 버튼 표시 끝 === */}
+
                             {/* 수량 입력 */}
                             <div style={{ marginBottom: '10px' }}>
                                 <label htmlFor="quantity" style={{ marginRight: '10px', fontWeight: 'bold' }}>
@@ -591,6 +814,7 @@ const PostDetail = () => {
                             {/* 참여 버튼 */}
                             <button
                                 onClick={async () => {
+                                    console.log("postid: ",post.id);
                                     const success = await participateInPost(post.id, quantity);
                                     if (success) {
                                         window.location.reload(); // 참여 성공 시 페이지 새로고침

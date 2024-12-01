@@ -7,6 +7,17 @@ import { ParticipationModule } from './participation/paticipation.module';
 import { TrustScoreModule } from './trust-score/trust-score.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import * as dotenv from 'dotenv';
+
+console.log(process.cwd() + '/src/.env.dev');
+
+if (process.env.NODE_ENV === 'development') {
+  dotenv.config({ path: process.cwd() + '/src/.env.dev' });
+} else if (process.env.NODE_ENV === 'production') {
+  dotenv.config({ path: process.cwd() + '/src/.env.prod' });
+}
+
+console.log(process.env);
 
 @Module({
   imports: [
@@ -18,8 +29,8 @@ import { ConfigModule } from '@nestjs/config';
     TrustScoreModule, // 신뢰 점수 모듈
     PrismaModule, // Prisma ORM 모듈
     ConfigModule.forRoot({
-      envFilePath: './src/.env',
-      isGlobal: true, // 모든 모듈에서 환경 변수를 접근 가능하게 함
+      isGlobal: true,
+      envFilePath: `./src/.env.${process.env.NODE_ENV || 'dev'}`, // 모든 모듈에서 환경 변수를 접근 가능하게 함
     }),
   ],
 })

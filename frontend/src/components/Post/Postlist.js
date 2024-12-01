@@ -20,7 +20,6 @@ const PostList = () => {
 
 
     useEffect(() => {
-
         const fetchPostAuthorNickname = async (authorId) => {
             try {
                 const response = await fetch(`${BASE_URL}/users/${authorId}`);
@@ -29,26 +28,11 @@ const PostList = () => {
                 return userData.nickname; // nickname 반환
             } catch (error) {
                 console.error(`Error fetching author data for authorId ${authorId}:`, error);
-                return null; // 에러 발생 시 기본값 반환
+                return "Anonymous"; // 에러 발생 시 기본값 반환
             }
         };
 
-        const fetchPostAndAuthor = async () => {
-            try {
-                // 게시물 데이터 가져오기
-                const response = await fetch(`${BASE_URL}/posts/id/${id}`);
-                if (!response.ok) throw new Error('Failed to fetch post data');
-                const postData = await response.json();
-
-                // 작성자의 nickname 가져오기
-                const authorNickname = await fetchPostAuthorNickname(postData.authorId);
-                setPost({ ...postData, authornickname: authorNickname }); // nickname 추가
-            } catch (error) {
-                console.error('Error fetching post or author data:', error);
-            }
-        };
-
-        const fetchPosts = async () => {
+        const fetchPostsWithNicknames = async () => {
             try {
                 setLoading(true);
 
@@ -62,14 +46,32 @@ const PostList = () => {
                     const searchResponse = await fetch(searchUrl);
                     if (!searchResponse.ok) throw new Error("Failed to fetch search results");
                     const searchData = await searchResponse.json();
-                    setSearchResults(searchData);
+
+                    // 각 포스트에 authornickname 추가
+                    const searchResultsWithNicknames = await Promise.all(
+                        searchData.map(async (post) => {
+                            const authorNickname = await fetchPostAuthorNickname(post.authorId);
+                            return { ...post, authornickname: authorNickname };
+                        })
+                    );
+
+                    setSearchResults(searchResultsWithNicknames);
                 }
 
                 // 전체 게시글 가져오기
                 const allPostsResponse = await fetch(`${BASE_URL}/posts`);
                 if (!allPostsResponse.ok) throw new Error("Failed to fetch all posts");
                 const allPostsData = await allPostsResponse.json();
-                setAllPosts(allPostsData);
+
+                // 각 포스트에 authornickname 추가
+                const allPostsWithNicknames = await Promise.all(
+                    allPostsData.map(async (post) => {
+                        const authorNickname = await fetchPostAuthorNickname(post.authorId);
+                        return { ...post, authornickname: authorNickname };
+                    })
+                );
+
+                setAllPosts(allPostsWithNicknames);
             } catch (error) {
                 console.error("Error fetching posts:", error);
             } finally {
@@ -77,8 +79,7 @@ const PostList = () => {
             }
         };
 
-        fetchPosts();
-        fetchPostAndAuthor();
+        fetchPostsWithNicknames();
     }, [searchQuery, searchType]);
 
     const handlePostClick = (postId) => {

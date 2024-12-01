@@ -105,4 +105,29 @@ export class ParticipationService {
       );
     });
   }
+
+  async checkParticipation(postId: number, userId: number): Promise<boolean> {
+    const participation = await this.prisma.participation.findUnique({
+      where: {
+        postId_userId: { postId, userId },
+      },
+    });
+
+    return !!participation; // 참여 여부를 Boolean 값으로 반환
+  }
+
+  async getParticipants(postId: number) {
+    // 참여 테이블에서 특정 postId와 연결된 userId를 조회
+    const participations = await this.prisma.participation.findMany({
+      where: { postId },
+      include: { user: true }, // 참여한 유저의 정보를 함께 가져옴
+    });
+
+    // 필요한 유저 정보만 추출하여 반환
+    return participations.map((participation) => ({
+      userId: participation.user.id,
+      nickname: participation.user.nickname,
+      trustScore: participation.user.trustScore,
+    }));
+  }
 }

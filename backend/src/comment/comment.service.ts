@@ -37,7 +37,7 @@ export class CommentService {
         content,
         class: 0, // 원댓글은 class가 0
         order: newOrder, // 게시글 내 가장 마지막 위치
-        groupNum: null, // 부모가 없으므로 groupNum은 null
+        groupNum: 0, // 부모가 없으므로 groupNum은 null
       },
     });
 
