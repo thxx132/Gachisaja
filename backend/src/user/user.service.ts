@@ -36,7 +36,9 @@ export class UserService {
       throw new ConflictException('The email or nickname is already in use.');
     }
 
-    const defaultprofileImageUrl = this.configService.get('DEFAULT_PROFILE_IMAGE_URL');
+    const defaultprofileImageUrl = this.configService.get(
+      'DEFAULT_PROFILE_IMAGE_URL',
+    );
     const profileImageUrl = imageUrl || defaultprofileImageUrl;
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
@@ -79,22 +81,39 @@ export class UserService {
       updateUserDto.profileImageUrl = uploadedImageUrl; // 파일 URL 업데이트
     }
 
-    const existingUser = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: updateUserDto.email, id: { not: id } },
-          { nickname: updateUserDto.nickname, id: { not: id } },
-        ],
-      },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('The email or nickname is already in use.');
+    // 중복 검사 조건 생성
+    const checkConditions = [];
+    if (updateUserDto.email) {
+      checkConditions.push({ email: updateUserDto.email });
     }
+    if (updateUserDto.nickname) {
+      checkConditions.push({ nickname: updateUserDto.nickname });
+    }
+
+    // 중복 검사 실행 (조건이 있을 때만)
+    if (checkConditions.length > 0) {
+      const existingUser = await this.prisma.user.findFirst({
+        where: {
+          id: { not: id }, // 자신의 데이터 제외
+          OR: checkConditions,
+        },
+      });
+
+      if (existingUser) {
+        throw new ConflictException(
+          'The email or nickname is already in use by another user.',
+        );
+      }
+    }
+
+    // 유저 정보 업데이트
+    const filteredUpdateUserDto = Object.fromEntries(
+      Object.entries(updateUserDto).filter(([_, value]) => value != null),
+    );
 
     return this.prisma.user.update({
       where: { id },
-      data: updateUserDto,
+      data: filteredUpdateUserDto,
     });
   }
 
