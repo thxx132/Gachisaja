@@ -23,7 +23,23 @@ const UserProfilePage = () => {
 
                 if (!response.ok) throw new Error('Failed to fetch user data');
                 const userData = await response.json();
-                setUser(userData);
+
+                // 추가 정보 가져오기
+                const userDetailsResponse = await fetch(`${BASE_URL}/users/${userData.userId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (!userDetailsResponse.ok) throw new Error('Failed to fetch user details');
+                const userDetails = await userDetailsResponse.json();
+
+                // user 상태 업데이트
+                setUser({
+                    ...userData,
+                    email: userDetails.email,
+                    nickname: userDetails.nickname,
+                    trustScore: userDetails.trustScore,
+                    profileImageUrl: userDetails.profileImageUrl,
+                });
 
                 // 참여한 게시글 가져오기
                 const postsResponse = await fetch(`${BASE_URL}/participations`, {
@@ -45,23 +61,56 @@ const UserProfilePage = () => {
     const handleUserUpdate = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${BASE_URL}/users/update`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(updatedUser),
+
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                return;
+            }
+
+            // FormData 생성
+            const formData = new FormData();
+
+            // updatedUser 객체의 키-값을 FormData에 추가
+            Object.entries(updatedUser).forEach(([key, value]) => {
+                if (value) {
+                    formData.append(key, value); // 값이 존재하는 경우에만 추가
+                    // console.log(`FormData - ${key}:`, value); // 추가된 항목 확인
+                }
             });
 
-            if (!response.ok) throw new Error('Failed to update user');
+            // API 호출
+            const response = await fetch(`${BASE_URL}/users/${user.userId}`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${token}`, // 인증 헤더 추가
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                if (response.status === 409) {
+                    alert('이미 사용 중인 이메일 또는 닉네임입니다.');
+                } else {
+                    alert('사용자 정보 수정에 실패했습니다.');
+                }
+                throw new Error(`Failed to update user: ${response.statusText}`);
+            }
+
+            // 성공적으로 업데이트된 데이터 처리
             const updatedUserData = await response.json();
-            setUser(updatedUserData); // 최신화된 유저 정보로 업데이트
-            alert('User information updated successfully!');
+            setUser({
+                ...user,
+                ...updatedUserData, // 기존 사용자 데이터와 병합
+            });
+
+            alert('수정 성공!');
+            window.location.reload(); // 수정 성공 후 페이지 새로고침
         } catch (error) {
             console.error('Error updating user:', error);
+            alert('수정 실패...');
         }
     };
+
 
     // 유저 삭제
     const handleUserDelete = async () => {
@@ -72,16 +121,17 @@ const UserProfilePage = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${BASE_URL}/users/delete`, {
+            const response = await fetch(`${BASE_URL}/users/${user.userId}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` },
             });
 
             if (!response.ok) throw new Error('Failed to delete user');
-            alert('User deleted successfully!');
+            alert('삭제 성공!');
             navigate('/'); // 메인 페이지로 이동
         } catch (error) {
             console.error('Error deleting user:', error);
+            alert('삭제 실패...');
         }
     };
 
@@ -90,6 +140,16 @@ const UserProfilePage = () => {
             <h1>User Profile</h1>
             {user && (
                 <div>
+                    <img
+                        src={user.profileImageUrl || 'https://via.placeholder.com/150'}
+                        alt="User Profile"
+                        style={{
+                            width: '150px',
+                            height: '150px',
+                            borderRadius: '50%',
+                            marginBottom: '20px',
+                        }}
+                    />
                     <p><strong>Username:</strong> {user.username}</p>
                     <p><strong>Email:</strong> {user.email}</p>
                     <p><strong>Nickname:</strong> {user.nickname}</p>

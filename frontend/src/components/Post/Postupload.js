@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PostUpload.css'; // CSS 파일 추가
 
+
 const PostUpload = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
